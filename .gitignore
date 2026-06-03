@@ -1,9 +1,6 @@
-# Android/Gradle
 .gradle/
 build/
 local.properties
-
-# IDE
 .idea/
 *.iml
 *.iws
@@ -11,19 +8,11 @@ local.properties
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
 Thumbs.db
-
-# NDK/CMake
 externalNativeBuild/
 .cxx/
-
-# Module output
-out/*.zip
-
-# Generated
+out/
 *.dex
 *.class
 *.log
