@@ -157,10 +157,9 @@ class KeyMintInterceptor(
 
             response.iOperation?.let { op ->
                 val opBinder = op.asBinder()
-                val backdoor = BinderInterceptor.getBackdoor(target) ?: return@let
-                OperationInterceptor.gBackdoorBinder = backdoor
-                val interceptor = OperationInterceptor()
-                BinderInterceptor.register(backdoor, opBinder, interceptor)
+                val opBackdoor = BinderInterceptor.getBackdoor(target) ?: return@let
+                val interceptor = OperationInterceptor(op, opBackdoor)
+                BinderInterceptor.register(opBackdoor, opBinder, interceptor)
                 Logger.i("Registered OperationInterceptor for UID=$uid")
             }
         } catch (e: Exception) {
@@ -363,13 +362,17 @@ class KeyMintInterceptor(
             metadata = metadata,
             keyPair = keyPair,
             securityLevel = securityLevel,
-            securityLevelBinder = this as IBinder,
+            securityLevelBinder = originalBinder,
             certChain = chain.map { it as X509Certificate },
         ))
 
+        val response = android.system.keystore2.KeyEntryResponse().apply {
+            this.metadata = metadata
+            iSecurityLevel = originalBinder
+        }
         val override = Parcel.obtain()
         override.writeNoException()
-        override.writeTypedObject(metadata, 0)
+        override.writeTypedObject(response, 0)
         return TransactionResult.OverrideReply(override)
     }
 }

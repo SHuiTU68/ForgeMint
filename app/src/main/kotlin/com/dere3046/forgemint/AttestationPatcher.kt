@@ -145,9 +145,7 @@ object AttestationPatcher {
     }
 
     private fun parseAttestationExtension(certHolder: X509CertificateHolder): ParsedAttestation? {
-        val extension = certHolder.getExtension(
-            org.bouncycastle.asn1.ASN1ObjectIdentifier(AttestationConstants.ATTESTATION_OID)
-        ) ?: return null
+        val extension = certHolder.getExtension(AttestationConstants.ATTESTATION_OID_OBJ) ?: return null
         val sequence = ASN1Sequence.getInstance(extension.extnValue.octets)
         val allFields = sequence.toArray()
 
@@ -207,7 +205,7 @@ object AttestationPatcher {
         val patchedOctets = DEROctetString(patchedSequence)
 
         return Extension(
-            org.bouncycastle.asn1.ASN1ObjectIdentifier(AttestationConstants.ATTESTATION_OID),
+            AttestationConstants.ATTESTATION_OID_OBJ,
             false, patchedOctets,
         )
     }

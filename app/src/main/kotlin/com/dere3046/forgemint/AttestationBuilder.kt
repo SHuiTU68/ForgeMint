@@ -52,7 +52,7 @@ object AttestationBuilder {
     ): org.bouncycastle.asn1.x509.Extension {
         val keyDescription = buildKeyDescription(params, uid, securityLevel)
         return org.bouncycastle.asn1.x509.Extension(
-            ASN1ObjectIdentifier(AttestationConstants.ATTESTATION_OID),
+            AttestationConstants.ATTESTATION_OID_OBJ,
             false,
             DEROctetString(keyDescription.encoded),
         )

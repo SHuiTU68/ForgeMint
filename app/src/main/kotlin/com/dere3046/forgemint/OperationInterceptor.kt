@@ -2,8 +2,12 @@ package com.dere3046.forgemint
 
 import android.os.IBinder
 import android.os.Parcel
+import android.system.keystore2.IKeystoreOperation
 
-class OperationInterceptor : BinderInterceptor() {
+class OperationInterceptor(
+    private val original: IKeystoreOperation?,
+    private val backdoor: IBinder,
+) : BinderInterceptor() {
 
     override fun onPreTransact(
         txId: Long,
@@ -15,7 +19,7 @@ class OperationInterceptor : BinderInterceptor() {
         data: Parcel,
     ): TransactionResult {
         if (code == FINISH_TRANSACTION || code == ABORT_TRANSACTION) {
-            unregister(target)
+            BinderInterceptor.unregister(backdoor, target)
         }
         return TransactionResult.ContinueAndSkipPost
     }
@@ -26,15 +30,9 @@ class OperationInterceptor : BinderInterceptor() {
         val ABORT_TRANSACTION: Int by lazy { resolveCode("TRANSACTION_abort") }
         val UPDATE_AAD_TRANSACTION: Int by lazy { resolveCode("TRANSACTION_updateAad") }
 
-        fun unregister(binder: IBinder) {
-            gBackdoorBinder?.let { BinderInterceptor.unregister(it, binder) }
-        }
-
-        @Volatile var gBackdoorBinder: IBinder? = null
-
         private fun resolveCode(name: String): Int {
             return try {
-                android.system.keystore2.IKeystoreOperation.Stub::class.java
+                IKeystoreOperation.Stub::class.java
                     .getDeclaredField(name)
                     .apply { isAccessible = true }
                     .getInt(null)
