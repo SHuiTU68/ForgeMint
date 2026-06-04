@@ -32,7 +32,6 @@ object App {
             try {
                 val ksBinder = ServiceManager.getService(KEYSTORE_SERVICE)
                 if (ksBinder == null) {
-                    checkRetryLimit()
                     Thread.sleep(RETRY_DELAY_MS)
                     continue
                 }
