@@ -48,13 +48,15 @@ open class BinderInterceptor : Binder() {
 
     private fun handlePreTransact(txId: Long, data: Parcel, reply: Parcel?): Boolean {
         try {
+            val pos0 = data.dataPosition()
             val target = data.readStrongBinder()
+            val pos1 = data.dataPosition()
             val txCode = data.readInt()
             val txFlags = data.readInt()
             val callingUid = data.readInt()
             val callingPid = data.readInt()
-
             val dataSize = data.readLong().toInt()
+            Logger.d("preTr: sb=${pos1-pos0} code=$txCode flags=$txFlags uid=$callingUid pid=$callingPid dS=$dataSize")
             val subData = Parcel.obtain()
             subData.appendFrom(data, data.dataPosition(), dataSize)
             subData.setDataPosition(0)
