@@ -30,7 +30,7 @@ using namespace android;
 #define ACTION_SKIP_POST        3
 #define ACTION_OVERRIDE_DATA    4
 
-static int (*g_orig_ioctl)(int, int, ...);
+static int (*g_orig_ioctl)(int, unsigned long, ...);
 
 struct ThreadTxInfo {
     uint64_t tx_id;
@@ -200,7 +200,7 @@ status_t BinderStub::onTransact(uint32_t code, const Parcel &data,
     return result;
 }
 
-static int hooked_ioctl(int fd, int request, ...)
+static int hooked_ioctl(int fd, unsigned long request, ...)
 {
     va_list ap;
     va_start(ap, request);
