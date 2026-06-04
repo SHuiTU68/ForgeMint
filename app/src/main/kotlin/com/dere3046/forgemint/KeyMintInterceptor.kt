@@ -53,12 +53,11 @@ class KeyMintInterceptor(
 
         val genParams = parseParams(data) ?: return TransactionResult.Continue
         val params = genParams.attestation
-        if (!params.isAttestKey) {
-            Logger.d("Not attestation key, forwarding to HAL")
-            return TransactionResult.ContinueAndSkipPost
-        }
 
-        if (ConfigManager.shouldGenerate(callingUid)) {
+        val needsSoftwareGen = ConfigManager.shouldGenerate(callingUid) ||
+            (ConfigManager.shouldPatch(callingUid) && params.isAttestKey)
+
+        if (needsSoftwareGen) {
             val result = tryGenerateSoftwareKey(params, genParams.descriptor, genParams.attestationKeyDescriptor, callingUid)
             if (result != null) {
                 Logger.i("Software key generated for UID=$callingUid")
@@ -67,8 +66,12 @@ class KeyMintInterceptor(
             Logger.w("Software generation failed, falling back to HAL")
         }
 
-        Logger.i("Forwarding to HAL for PATCH mode")
-        return TransactionResult.Continue
+        if (ConfigManager.shouldPatch(callingUid) && params.attestationChallenge != null) {
+            Logger.i("Forwarding to HAL for PATCH mode")
+            return TransactionResult.Continue
+        }
+
+        return TransactionResult.ContinueAndSkipPost
     }
 
     override fun onPostTransact(
