@@ -284,6 +284,34 @@ class KeyMintInterceptor(
         addAuth(Tag.CREATION_DATETIME, SecurityLevel.KEYSTORE) { dateTime = System.currentTimeMillis() }
         addAuth(Tag.USER_ID, SecurityLevel.SOFTWARE) { integer = callingUid / 100000 }
 
+        if (params.callerNonce == true) {
+            addAuth(Tag.CALLER_NONCE, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.minMacLength != null) {
+            addAuth(Tag.MIN_MAC_LENGTH, securityLevel) { integer = params.minMacLength }
+        }
+        if (params.rollbackResistance == true) {
+            addAuth(Tag.ROLLBACK_RESISTANCE, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.earlyBootOnly == true) {
+            addAuth(Tag.EARLY_BOOT_ONLY, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.allowWhileOnBody == true) {
+            addAuth(Tag.ALLOW_WHILE_ON_BODY, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.trustedUserPresenceRequired == true) {
+            addAuth(Tag.TRUSTED_USER_PRESENCE_REQUIRED, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.trustedConfirmationRequired == true) {
+            addAuth(Tag.TRUSTED_CONFIRMATION_REQUIRED, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+        if (params.maxUsesPerBoot != null) {
+            addAuth(Tag.MAX_USES_PER_BOOT, SecurityLevel.KEYSTORE) { integer = params.maxUsesPerBoot }
+        }
+        if (params.unlockedDeviceRequired == true) {
+            addAuth(Tag.UNLOCKED_DEVICE_REQUIRED, SecurityLevel.KEYSTORE) { boolValue = true }
+        }
+
         return list.toTypedArray()
     }
 

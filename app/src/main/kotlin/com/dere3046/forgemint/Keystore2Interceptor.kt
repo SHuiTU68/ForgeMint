@@ -88,28 +88,36 @@ class Keystore2Interceptor : BinderInterceptor() {
         try {
             data.enforceInterface(IKeystoreService.DESCRIPTOR)
             val descriptor = data.readTypedObject(KeyDescriptor.CREATOR) ?: return TransactionResult.Continue
-            val alias = descriptor.alias ?: return TransactionResult.Continue
 
-            val entry = StateManager.lookup(uid, alias) ?: return TransactionResult.Continue
-            val binder = entry.securityLevelBinder ?: run {
-                Logger.w("getKeyEntry alias=$alias UID=$uid → missing security level binder")
-                return TransactionResult.Continue
-            }
+            val entry = descriptor.alias?.let { StateManager.lookup(uid, it) }
+                ?: if (descriptor.domain == Domain.KEY_ID)
+                    StateManager.lookupByNspace(uid, descriptor.nspace)
+                else null
 
-            Logger.i("getKeyEntry alias=$alias UID=$uid → returning generated key")
-
-            val response = KeyEntryResponse().apply {
-                metadata = entry.metadata
-                iSecurityLevel = binder
-            }
-            val reply = Parcel.obtain()
-            reply.writeNoException()
-            reply.writeTypedObject(response, 0)
-            return TransactionResult.OverrideReply(reply)
+            if (entry == null) return TransactionResult.Continue
+            return buildGetKeyEntryResponse(entry)
         } catch (e: Exception) {
             Logger.e("getKeyEntry failed", e)
             return TransactionResult.Continue
         }
+    }
+
+    private fun buildGetKeyEntryResponse(entry: StateManager.KeyEntry): TransactionResult {
+        val binder = entry.securityLevelBinder ?: run {
+            Logger.w("getKeyEntry alias=${entry.alias} UID=${entry.uid} → missing sec level binder")
+            return TransactionResult.Continue
+        }
+        val pureCert = entry.metadata.certificate != null &&
+            entry.metadata.keySecurityLevel >= 0 &&
+            entry.metadata.authorizations?.isEmpty() != false
+        val response = KeyEntryResponse().apply {
+            metadata = entry.metadata
+            iSecurityLevel = if (pureCert) null else binder
+        }
+        val reply = Parcel.obtain()
+        reply.writeNoException()
+        reply.writeTypedObject(response, 0)
+        return TransactionResult.OverrideReply(reply)
     }
 
     private fun handleDeleteKey(data: Parcel, uid: Int): TransactionResult {
