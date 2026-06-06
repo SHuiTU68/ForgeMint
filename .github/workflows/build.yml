@@ -1,0 +1,53 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: set up Android SDK
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          mkdir -p $ANDROID_HOME
+          {
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            echo "ANDROID_SDK_ROOT=$ANDROID_HOME"
+          } >> $GITHUB_ENV
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-36" \
+            "ndk;25.1.8937393" \
+            "cmake;3.22.1" \
+            "build-tools;36.0.0"
+
+      - name: build debug + release
+        run: |
+          chmod +x gradlew
+          ./gradlew zipDebug zipRelease
+
+      - name: list outputs
+        run: ls -lh out/
+
+      - name: publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*.zip
+          generate_release_notes: true
