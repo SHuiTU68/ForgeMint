@@ -402,9 +402,8 @@ class KeyMintInterceptor(
     }
 
     private fun isKnownAttestationKey(uid: Int, descriptor: KeyDescriptor): Boolean {
-        val entry = StateManager.lookup(uid, descriptor.alias ?: return false)
-            ?: StateManager.lookupByNspace(uid, descriptor.nspace)
-        return entry != null
+        return StateManager.lookupByNspace(uid, descriptor.nspace) != null ||
+            (descriptor.alias != null && StateManager.lookup(uid, descriptor.alias) != null)
     }
 
     private fun replyKeymintError(errorCode: Int): TransactionResult? {
