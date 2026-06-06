@@ -40,7 +40,7 @@ class KeystoreInterceptor(
     private val attestKeyCode: Int by lazy { resolveCode("attestKey") }
     private val getCode: Int by lazy { resolveCode("get") }
 
-    private val keygenParams = ConcurrentHashMap<String, LegacyKeygenParameters>()
+    private val keygenParams = ConcurrentHashMap<String, KeystoreOneKeygenParams>()
     private val generatedKeyPairs = ConcurrentHashMap<String, KeyPair>()
     private val patchedChainCache = ConcurrentHashMap<String, Array<Certificate>>()
 
@@ -138,7 +138,7 @@ class KeystoreInterceptor(
                 keymasterArgs.readFromParcel(data)
             }
 
-            val params = LegacyKeygenParameters.fromKeymasterArguments(keymasterArgs)
+            val params = KeystoreOneKeygenParams.fromKeymasterArguments(keymasterArgs)
             keygenParams[alias] = params
 
             val callback = IKeystoreKeyCharacteristicsCallback.Stub.asInterface(callbackBinder)
@@ -297,7 +297,7 @@ class KeystoreInterceptor(
     }
 }
 
-private class LegacyKeygenParameters(
+private class KeystoreOneKeygenParams(
     val algorithm: Int,
     val keySize: Int,
     val purpose: List<Int>,
@@ -353,10 +353,10 @@ private class LegacyKeygenParameters(
     }
 
     companion object {
-        fun fromKeymasterArguments(args: KeymasterArguments): LegacyKeygenParameters {
+        fun fromKeymasterArguments(args: KeymasterArguments): KeystoreOneKeygenParams {
             val algorithm = args.getEnum(KeymasterDefs.KM_TAG_ALGORITHM, 0)
             val keySize = args.getUnsignedInt(KeymasterDefs.KM_TAG_KEY_SIZE, 0L).toInt()
-            return LegacyKeygenParameters(
+            return KeystoreOneKeygenParams(
                 algorithm = algorithm,
                 keySize = keySize,
                 purpose = args.getEnums(KeymasterDefs.KM_TAG_PURPOSE),
