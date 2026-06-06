@@ -39,6 +39,23 @@ class KeyMintInterceptor(
     private val securityLevel: Int,
 ) : BinderInterceptor() {
 
+    private val recentStrongBoxOps = java.util.concurrent.ConcurrentHashMap<Int, java.util.concurrent.ConcurrentLinkedDeque<Long>>()
+
+    private fun enforceStrongBoxLimitThenContinue(uid: Int): TransactionResult {
+        if (securityLevel != android.hardware.security.keymint.SecurityLevel.STRONGBOX) {
+            return TransactionResult.Continue
+        }
+        val timestamps = recentStrongBoxOps.computeIfAbsent(uid) { java.util.concurrent.ConcurrentLinkedDeque() }
+        val cutoff = System.nanoTime() - 10_000_000_000L
+        timestamps.removeIf { it < cutoff }
+        if (timestamps.size >= 4) {
+            Logger.w("StrongBox op limit reached for uid=$uid (${timestamps.size} ops in 10s window)")
+            return replyKeymintError(-29) ?: TransactionResult.Skip
+        }
+        timestamps.addLast(System.nanoTime())
+        return TransactionResult.Continue
+    }
+
     data class GenerateKeyParams(
         val attestation: KeyMintAttestation,
         val descriptor: KeyDescriptor,
@@ -135,17 +152,16 @@ class KeyMintInterceptor(
             reply.readException()
             val metadata = reply.readTypedObject(KeyMetadata.CREATOR) ?: return TransactionResult.Skip
 
-            val originalChain = CertificateHelper.getCertificateChain(metadata) ?: return TransactionResult.Skip
-
             data.enforceInterface(IKeystoreSecurityLevel.DESCRIPTOR)
             val keyDescriptor = data.readTypedObject(KeyDescriptor.CREATOR) ?: return TransactionResult.Skip
             val keyId = StateManager.KeyIdentifier(callingUid, keyDescriptor.alias ?: "")
 
-            if (originalChain.size <= 1) {
+            val originalChain = CertificateHelper.getCertificateChain(metadata)
+            if (originalChain == null || originalChain.size <= 1) {
                 StateManager.cacheMetadataSnapshot(keyId, metadata)
                 val levelBinder = android.system.keystore2.IKeystoreSecurityLevel.Stub.asInterface(originalBinder)
                 StateManager.cacheTeeResponse(keyId, metadata, levelBinder)
-                Logger.d("Cached teeResponse for non-attested key alias=${keyDescriptor.alias}")
+                Logger.d("Cached teeResponse for non-attested/null-chain key alias=${keyDescriptor.alias}")
                 return TransactionResult.Skip
             }
 
@@ -233,7 +249,7 @@ class KeyMintInterceptor(
             val keyDescriptor = data.readTypedObject(KeyDescriptor.CREATOR) ?: return TransactionResult.Continue
 
             val entry = StateManager.lookupByAliasOrDomain(uid, keyDescriptor)
-                ?: return TransactionResult.Continue
+                ?: return enforceStrongBoxLimitThenContinue(uid)
 
             val params = data.createTypedArray(KeyParameter.CREATOR) ?: return TransactionResult.Continue
             var parsedParams = KeyMintAttestation(params)
