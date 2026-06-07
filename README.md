@@ -63,7 +63,7 @@ all=20260601
 ```
 debug=false
 verbose_log=false
-fallback=true
+fallback=false
 whitelist_mode=false
 ```
 
