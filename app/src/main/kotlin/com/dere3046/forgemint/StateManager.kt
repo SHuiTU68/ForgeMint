@@ -53,6 +53,9 @@ object StateManager {
     private const val MAX_OPS_PER_UID = 15
     private const val STRONGBOX_MAX_OPS = 4
 
+    fun countActiveOps(uid: Int): Int = activeOps[uid]?.count { !it.finalized } ?: 0
+    fun getOpLimit(securityLevel: Int): Int = if (securityLevel == android.hardware.security.keymint.SecurityLevel.STRONGBOX) STRONGBOX_MAX_OPS else MAX_OPS_PER_UID
+
     data class SoftwareGrant(
         val granteeUid: Int,
         val accessVector: Int,
