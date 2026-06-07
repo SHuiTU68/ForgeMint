@@ -460,41 +460,10 @@ class KeyMintInterceptor(
         try {
             data.enforceInterface(IKeystoreSecurityLevel.DESCRIPTOR)
             val keyDescriptor = data.readTypedObject(KeyDescriptor.CREATOR)
-            val alias = keyDescriptor?.alias ?: return TransactionResult.Continue
-
-            if (ConfigManager.shouldSkip(uid)) return TransactionResult.Continue
-            if (ConfigManager.shouldPatch(uid)) return TransactionResult.Continue
-
-            val attestationKeyDescriptor = data.readTypedObject(KeyDescriptor.CREATOR)
-            val params = data.createTypedArray(KeyParameter.CREATOR)
-            Logger.i("importKey alias=$alias UID=$uid → virtualizing")
-
-            if (StateManager.lookup(uid, alias) != null) {
-                StateManager.remove(uid, alias)
+            val alias = keyDescriptor?.alias
+            if (alias != null) {
+                Logger.d("importKey alias=$alias UID=$uid → forwarding to HAL, will cleanup on success")
             }
-
-            val nspace = SecureRandom().nextLong()
-            val responseDescriptor = KeyDescriptor().apply {
-                domain = Domain.KEY_ID
-                this.nspace = nspace
-                this.alias = null
-                blob = null
-            }
-            val metadata = KeyMetadata().apply {
-                keySecurityLevel = securityLevel
-                key = responseDescriptor
-                modificationTimeMs = System.currentTimeMillis()
-                authorizations = params?.map {
-                    android.system.keystore2.Authorization().apply { keyParameter = it }
-                }?.toTypedArray()
-                certificate = null
-                certificateChain = null
-            }
-
-            val override = Parcel.obtain()
-            override.writeNoException()
-            override.writeTypedObject(metadata, 0)
-            return TransactionResult.OverrideReply(override)
         } catch (_: Exception) {}
         return TransactionResult.Continue
     }
