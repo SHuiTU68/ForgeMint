@@ -27,6 +27,8 @@ fi
 case "$ARCH" in
     arm64) ARCH_DIR="arm64-v8a" ;;
     arm)   ARCH_DIR="armeabi-v7a" ;;
+    x64)   ARCH_DIR="x86_64" ;;
+    x86)   ARCH_DIR="x86" ;;
     *)     abort "Unsupported arch: $ARCH" ;;
 esac
 
