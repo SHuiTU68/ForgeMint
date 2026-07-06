@@ -14,55 +14,104 @@
 #
 
 SKIPUNZIP=1
+MIN_RELEASE=10
+RELEASE=$(grep_get_prop ro.build.version.release)
+MODULE_VER=$(grep_prop version "$TMPDIR/module.prop")
+abort_verify() {
+  ui_print "***********************************************"
+  ui_print "! $@"
+  ui_print "! This zip may be corrupted, please try downloading again"
+  abort    "***********************************************"
+}
+##VARIABLE##
+#PUBLIC#
+FSCONFIG="/data/adb/forgestore"
+#EXTRACT MODULE FILES#
+FILES="
+lib/$ARCH/*
+daemon
+mistylake.$ARCH
+module.prop
+sepolicy.rule
+service.apk
+service.sh
+"
+#POST PROCESS#
+N755S="
+$MODPATH/lib/libinject.so
+$MODPATH/daemon
+"
+##END##
 
-if [ "$BOOTMODE" ]; then
-    ui_print "- Installing from ${KSU:+KernelSU}${APATCH:+APatch}${MAGISK:+Magisk} app"
-else
-    abort "Recovery install not supported"
-fi
-
-[ "$API" -lt 29 ] && abort "Minimal supported SDK is 29 (Android 10)"
-
-case "$ARCH" in
-    arm64) ARCH_DIR="arm64-v8a" ;;
-    arm)   ARCH_DIR="armeabi-v7a" ;;
-    x64)   ARCH_DIR="x86_64" ;;
-    x86)   ARCH_DIR="x86" ;;
-    *)     abort "Unsupported arch: $ARCH" ;;
-esac
-
-VERSION=$(grep_prop version "$TMPDIR/module.prop")
-ui_print "- ForgeStore $VERSION on $ARCH"
-
-ui_print "- Verifying module integrity"
-unzip -o "$ZIPFILE" "verify.sh" -d "$TMPDIR" >&2
+##PRE PROCESS##
+#CHECK INTEGRITY#
+unzip -o "$ZIPFILE" 'verify.sh' -d "$TMPDIR" >/dev/null
+[ -f "$TMPDIR/verify.sh" ] || abort_verify "Unable to extract verify.sh"
 source "$TMPDIR/verify.sh"
-verify_module "$ZIPFILE"
+#CHECK ENVIRONMENT#
+[ "$BOOTMODE" ] || {
+  ui_print "***********************************************"
+  ui_print "! Install from recovery is not supported"
+  abort "***********************************************"
+}
+[ "$RELEASE" -lt $MIN_RELEASE ] && {
+  ui_print "***********************************************"
+  ui_print "! Unsupported android version: $RELEASE"
+  ui_print "! Minimal supported android version is $MIN_RELEASE"
+  abort "***********************************************"
+}
+case "$ARCH" in
+  x64|x86|arm|arm64)
+    ui_print "- Device arch: $ARCH"
+    ;;
+  *) abort "! Unsupported arch: $ARCH";;
+esac
+if [ "$KernelSU" ]; then
+  ui_print "- KernelSU version code: $KSU_KERNEL_VER_CODE (kernel) + $KSU_VER_CODE (ksud)"
+  ui_print "- KernelSU version: $KSU_VER"
+elif [ "$APatch" ]; then
+  ui_print "- APatch version code: $APATCH_VER_CODE"
+  ui_print "- APatch version: $APATCH_VER"
+elif [ "$Magisk" ]; then
+  ui_print "- Magisk version code: $MAGISK_VER_CODE"
+  ui_print "- Magisk version: $MAGISK_VER"
+fi
+#PRINT INFORMATION#
+ui_print "- Install module ForgeStore $MODULE_VER"
+sleep 1s
+##END##
 
-mkdir -p "$MODPATH/lib"
-ui_print "- Extracting module files"
-unzip -o "$ZIPFILE" "module.prop" -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" "lib/$ARCH_DIR/libforgestore.so" "lib/$ARCH_DIR/libinject.so" -d "$MODPATH" >&2
-mv "$MODPATH/lib/$ARCH_DIR/libforgestore.so" "$MODPATH/lib/"
-mv "$MODPATH/lib/$ARCH_DIR/libinject.so" "$MODPATH/lib/"
-rmdir "$MODPATH/lib/$ARCH_DIR"
-unzip -o "$ZIPFILE" "service.apk" -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" "daemon" -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" "sepolicy.rule" -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" "service.sh" -d "$MODPATH" >&2
+##EXTRACT MODULE FILES##
+ui_print "- Extracting general files"
+for FILE in $FILES; do
+  extract "$ZIPFILE" "$FILE" "$MODPATH"
+done
 
+ui_print "- Processing $ARCH libraries"
+mv -f "$MODPATH/lib/$ARCH"/* "$MODPATH/lib/"
+rmdir "$MODPATH/lib/$ARCH"
+mv -f "$MODPATH/mistylake.$ARCH" "$MODPATH/mistylake"
+##END##
+
+##POST PROCESS##
 ui_print "- Setting permissions"
-set_perm_recursive "$MODPATH/lib" 0 0 0644 0644
-set_perm "$MODPATH/lib/libinject.so" 0 0 0755
-set_perm "$MODPATH/service.apk" 0 0 0644
-set_perm "$MODPATH/daemon" 0 0 0755
-set_perm "$MODPATH/service.sh" 0 0 0755
+for N755 in $N755S; do
+  set_perm "$N755" 0 0 0755
+done
 
 ui_print "- Setting up config directory"
-DATA_DIR="/data/adb/forgestore"
-mkdir -p "$DATA_DIR"
-[ ! -f "$DATA_DIR/hbk" ] && {
-    dd if=/dev/random of="$DATA_DIR/hbk" bs=32 count=1 2>/dev/null
-    ui_print "  Generated HBK seed"
+[ -d "$FSCONFIG" ] || {
+  ui_print "- Creating configuration directory"
+  mkdir -p "$FSCONFIG"
 }
-true
+[ -f "$FSCONFIG/target.txt" ] || {
+  ui_print "- Adding default target scope"
+  extract "$ZIPFILE" 'target.txt' "$FSCONFIG"
+}
+[ -f "$FSCONFIG/hbk" ] || {
+  dd if=/dev/random of="$FSCONFIG/hbk" bs=32 count=1 2>/dev/null
+  ui_print "- Generated HBK seed"
+}
+##END##
+
+ui_print "- Install Done"
