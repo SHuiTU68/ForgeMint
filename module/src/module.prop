@@ -1,0 +1,6 @@
+id=${moduleId}
+name=${moduleName}
+version=${versionName}
+versionCode=${versionCode}
+author=dere3046
+description=ForgeStore KeyMint attestation hook
