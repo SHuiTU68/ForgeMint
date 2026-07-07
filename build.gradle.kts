@@ -1,5 +1,7 @@
+val moduleId by extra("forgestore")
+val moduleName by extra("Forge Store")
 val verName by extra("v0.1.0")
-val verType by extra("")
+val verType by extra("-Dev")
 val verCode by extra(
     providers.exec {
         commandLine("git", "rev-list", "HEAD", "--count")
