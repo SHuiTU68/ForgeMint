@@ -34,7 +34,7 @@ import org.xmlpull.v1.XmlPullParserFactory
 
 object KeyboxReader {
 
-    private const val KEYBOX_FILE = "/data/adb/forgestore/keybox.xml"
+    private const val KEYBOX_FILE = "/data/adb/forge_store/keybox.xml"
 
     private var keyboxCache: ConcurrentHashMap<String, CertificateBuilder.KeyboxData>? = null
 

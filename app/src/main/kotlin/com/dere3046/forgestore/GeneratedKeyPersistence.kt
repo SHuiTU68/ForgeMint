@@ -37,7 +37,7 @@ import kotlin.concurrent.withLock
 
 object GeneratedKeyPersistence {
 
-    private const val DIR = "/data/adb/forgestore/keys"
+    private const val DIR = "/data/adb/forge_store/keys"
     private const val FORMAT_VERSION = 2
     private val locks = ConcurrentHashMap<String, ReentrantLock>()
     private val certFactory by lazy { CertificateFactory.getInstance("X.509") }

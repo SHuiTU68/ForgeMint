@@ -13,19 +13,33 @@
 # Copyright (C) 2026 TheGeniusClub
 #
 
-SKIPUNZIP=1
-MIN_RELEASE=10
-RELEASE=$(grep_get_prop ro.build.version.release)
-MODULE_VER=$(grep_prop version "$TMPDIR/module.prop")
+##FUNCTIONS##
+#OTHER#
 abort_verify() {
   ui_print "***********************************************"
   ui_print "! $@"
   ui_print "! This zip may be corrupted, please try downloading again"
   abort    "***********************************************"
 }
+##END##
+
 ##VARIABLE##
+#INSTALL PROCESS#
+SKIPUNZIP=1
 #PUBLIC#
-FSCONFIG="/data/adb/forgestore"
+FSCONFIG="/data/adb/forge_store"
+#CHECK ENVIRONMENT#
+MIN_RELEASE=10
+RELEASE=$(grep_get_prop ro.build.version.release)
+if [ "$KSU" ]; then
+  KernelSU=true
+elif [ "$APATCH" ]; then
+  APatch=true
+elif [ "$MAGISK_VER" ]; then
+  Magisk=true
+fi
+#PRINT INFORMATION#
+MODULE_VER=$(grep_prop version "$TMPDIR/module.prop")
 #EXTRACT MODULE FILES#
 FILES="
 lib/$ARCH/*
@@ -64,7 +78,9 @@ case "$ARCH" in
   x64|x86|arm|arm64)
     ui_print "- Device arch: $ARCH"
     ;;
-  *) abort "! Unsupported arch: $ARCH";;
+  *)
+    abort "! Unsupported arch: $ARCH"
+    ;;
 esac
 if [ "$KernelSU" ]; then
   ui_print "- KernelSU version code: $KSU_KERNEL_VER_CODE (kernel) + $KSU_VER_CODE (ksud)"

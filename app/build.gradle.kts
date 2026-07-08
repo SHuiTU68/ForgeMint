@@ -1,8 +1,3 @@
-import com.android.build.api.artifact.SingleArtifact
-import java.io.ByteArrayOutputStream
-import javax.inject.Inject
-import org.gradle.process.ExecOperations
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,9 +11,7 @@ dependencies {
 }
 
 val verName: String by rootProject.extra
-val verType: String by rootProject.extra
 val verCode: Int by rootProject.extra
-val verHash: String by rootProject.extra
 
 android {
     namespace = "com.dere3046.forgestore"

@@ -227,7 +227,7 @@ static void gen_rand(char *buf, int len)
 static void set_status_ok(void)
 {
     char path[256];
-    snprintf(path, sizeof(path), "/data/adb/modules/forgestore/module.prop");
+    snprintf(path, sizeof(path), "/data/adb/modules/forge_store/module.prop");
     int fd = open(path, O_RDONLY);
     if (fd < 0) return;
     char buf[4096] = {0};
