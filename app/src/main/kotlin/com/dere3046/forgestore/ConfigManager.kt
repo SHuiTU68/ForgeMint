@@ -31,7 +31,7 @@ object ConfigManager {
         val all: Int?,
     )
 
-    private const val CONFIG_DIR = "/data/adb/forgestore"
+    private const val CONFIG_DIR = "/data/adb/forge_store"
     private const val TARGET_FILE = "target.txt"
     private const val TEE_STATUS_FILE = "tee_status.txt"
     private const val PATCH_FILE = "security_patch.txt"

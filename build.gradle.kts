@@ -1,4 +1,4 @@
-val moduleId by extra("forgestore")
+val moduleId by extra("forge_store")
 val moduleName by extra("Forge Store")
 val verName by extra("v0.1.0")
 val verType by extra("-Dev")

@@ -186,7 +186,7 @@ object AttestationBuilder {
     }
 
     private val hbk: ByteArray by lazy {
-        val file = java.io.File("/data/adb/forgestore", "hbk")
+        val file = java.io.File("/data/adb/forge_store", "hbk")
         if (file.exists() && file.length() == 32L) {
             file.readBytes()
         } else {
@@ -397,13 +397,13 @@ object AttestationBuilder {
 
     private fun persistBootFile(name: String, value: ByteArray) {
         try {
-            java.io.File("/data/adb/forgestore", name).writeBytes(value)
+            java.io.File("/data/adb/forge_store", name).writeBytes(value)
         } catch (_: Exception) {}
     }
 
     private fun readBootFile(name: String): ByteArray? {
         try {
-            val file = java.io.File("/data/adb/forgestore", name)
+            val file = java.io.File("/data/adb/forge_store", name)
             if (file.exists() && file.length() == 32L) return file.readBytes()
         } catch (_: Exception) {}
         return null

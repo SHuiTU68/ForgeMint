@@ -1,9 +1,10 @@
 import java.security.Signature
 import java.security.KeyFactory
 import java.security.MessageDigest
-import io.github.rctcwyvrn.blake3.Blake3
 import java.security.spec.EdECPrivateKeySpec
 import java.security.spec.NamedParameterSpec
+
+import io.github.rctcwyvrn.blake3.Blake3
 
 buildscript {
     dependencies {
@@ -238,7 +239,7 @@ listOf(
 
 tasks.register("zip") {
     group = "module"
-    description = "Create module zip for Github Release"
+    description = "Create module zip for Github Release."
 
     dependsOn(
         "zipDebug",

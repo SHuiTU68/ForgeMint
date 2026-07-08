@@ -41,7 +41,7 @@ object App {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        modDir = System.getProperty("moddir") ?: "/data/adb/modules/forgestore"
+        modDir = System.getProperty("moddir") ?: "/data/adb/modules/forge_store"
 
         ConfigManager.initConfig()
         Logger.enabled = ConfigManager.isDebugEnabled

@@ -4,7 +4,7 @@ A Simple Forge of KeyStore
 
 ## Configuration
 
-Work dir: `/data/adb/forgestore/` — created on install. All files hot-reloaded on change.
+Work dir: `/data/adb/forge_store/` — created on install. All files hot-reloaded on change.
 
 ### 1. target.txt — Package modes
 
